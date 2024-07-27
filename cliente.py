@@ -1,6 +1,7 @@
 import socket
 import ssl
 import threading
+import argparse
 
 CERT_FILE = "client_certificate.pem"
 KEY_FILE = "client_key.pem"
@@ -23,11 +24,11 @@ def receive_messages(sock):
             print(f"Erro ao receber mensagem: {str(e)}")
             break
 
-def main():
+def main(ip, porta):
     context = create_ssl_context()
-    server_address = ('20.186.15.152', 1234)
+    server_address = (ip, porta)
     with socket.create_connection(server_address) as sock:
-        with context.wrap_socket(sock, server_hostname='20.186.15.152') as ssock:
+        with context.wrap_socket(sock, server_hostname=ip) as ssock:
             print("Conectado ao servidor")
             threading.Thread(target=receive_messages, args=(ssock,)).start()
             while True:
@@ -41,4 +42,12 @@ def main():
             print("Desconectado do servidor")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Cliente argumentos")
+        
+    # Adicionar argumentos
+    parser.add_argument('-i', '--ip', type=str, help="Endereço IP", required=True)
+    parser.add_argument('-p', '--porta', type=int, help="Porta", required=True)
+        
+    # Analisar argumentos
+    args = parser.parse_args()
+    main(args.ip, args.porta)
