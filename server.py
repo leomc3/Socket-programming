@@ -3,6 +3,7 @@ import ssl
 import sqlite3
 import threading
 import hashlib
+import argparse
 
 CERT_FILE = "server_certificate.pem"
 KEY_FILE = "server_key.pem"
@@ -50,15 +51,10 @@ def register_user(username, password):
     finally:
         conn.close()
 
-def enviar_mensagem_para_todos(mensagem, socket_sender):
-    nome_user = ''
-    for nome, conexao in clientes_conectados.items():
-        if (socket_sender == conexao):
-            nome_user = nome
-            break
+def enviar_mensagem_para_todos(mensagem):
     for client_id, conn in clientes_conectados.items():
         try:
-            conn.sendall(f'{nome_user} envia para todos: {mensagem}'.encode())
+            conn.sendall(mensagem.encode())
         except Exception as e:
             print(f"Erro ao enviar mensagem para cliente {client_id}: {str(e)}")
 
@@ -67,7 +63,7 @@ def enviar_mensagem_para_cliente(client_id, mensagem,socket_sender):
         conn = clientes_conectados[client_id]
         try:
             for nome,conexao in clientes_conectados.items():
-                if (socket_sender == conexao):
+                if (socket_sender == conexao)
                     conn.sendall(f'{nome}: {mensagem}'.encode())
         except Exception as e:
             print(f"Erro ao enviar mensagem para cliente {client_id}: {str(e)}")
@@ -110,7 +106,7 @@ def handle_client(client_ssl_socket, addr):
                     target = parts[1]
                     text = parts[2]
                     if target == "ALL":
-                        enviar_mensagem_para_todos(text, client_ssl_socket)
+                        enviar_mensagem_para_todos(text)
                         response = "Mensagem enviada para todos os clientes"
                     else:
                         enviar_mensagem_para_cliente(target, text, client_ssl_socket)
@@ -169,12 +165,12 @@ def handle_client(client_ssl_socket, addr):
                 del clientes_autenticados[client_id]
             print(f"Cliente {client_id} desconectado")
 
-def create_server():
+def create_server(ip, porta):
     global server_running
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(('0.0.0.0', 1234))
+    server_socket.bind((ip, porta))
     server_socket.listen(5)
-    print("Servidor em execução na porta 1234...")
+    print(f"Servidor em execução na porta: {porta}...")
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     context.load_cert_chain(certfile=CERT_FILE, keyfile=KEY_FILE)
     ssl_server_socket = context.wrap_socket(server_socket, server_side=True)
@@ -190,5 +186,14 @@ def create_server():
     print("Servidor desligado.")
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Cliente argumentos")
+        
+    # Adicionar argumentos
+    parser.add_argument('-i', '--ip', type=str, help="Endereço IP", required=True)
+    parser.add_argument('-p', '--porta', type=int, help="Porta", required=True)
+        
+    # Analisar argumentos
+    args = parser.parse_args()
+    
     create_table()
-    create_server()
+    create_server(args.ip, args.porta)
