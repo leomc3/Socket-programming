@@ -63,7 +63,7 @@ def enviar_mensagem_para_cliente(client_id, mensagem,socket_sender):
         conn = clientes_conectados[client_id]
         try:
             for nome,conexao in clientes_conectados.items():
-                if (socket_sender == conexao)
+                if (socket_sender == conexao):
                     conn.sendall(f'{nome}: {mensagem}'.encode())
         except Exception as e:
             print(f"Erro ao enviar mensagem para cliente {client_id}: {str(e)}")
