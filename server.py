@@ -50,18 +50,25 @@ def register_user(username, password):
     finally:
         conn.close()
 
-def enviar_mensagem_para_todos(mensagem):
+def enviar_mensagem_para_todos(mensagem, socket_sender):
+    nome_user = ''
+    for nome, conexao in clientes_conectados.items():
+        if (socket_sender == conexao):
+            nome_user = nome
+            break
     for client_id, conn in clientes_conectados.items():
         try:
-            conn.sendall(mensagem.encode())
+            conn.sendall(f'{nome_user} envia para todos: {mensagem}'.encode())
         except Exception as e:
             print(f"Erro ao enviar mensagem para cliente {client_id}: {str(e)}")
 
-def enviar_mensagem_para_cliente(client_id, mensagem):
+def enviar_mensagem_para_cliente(client_id, mensagem,socket_sender):
     if client_id in clientes_conectados:
         conn = clientes_conectados[client_id]
         try:
-            conn.sendall(mensagem.encode())
+            for nome,conexao in clientes_conectados.items():
+                if (socket_sender == conexao):
+                    conn.sendall(f'{nome}: {mensagem}'.encode())
         except Exception as e:
             print(f"Erro ao enviar mensagem para cliente {client_id}: {str(e)}")
     else:
@@ -103,10 +110,10 @@ def handle_client(client_ssl_socket, addr):
                     target = parts[1]
                     text = parts[2]
                     if target == "ALL":
-                        enviar_mensagem_para_todos(text)
+                        enviar_mensagem_para_todos(text, client_ssl_socket)
                         response = "Mensagem enviada para todos os clientes"
                     else:
-                        enviar_mensagem_para_cliente(target, text)
+                        enviar_mensagem_para_cliente(target, text, client_ssl_socket)
                         response = f"Mensagem enviada para {target}"
             elif mensagem.startswith("LOGIN"):
                 parts = mensagem.split(' ', 2)
